@@ -1,48 +1,62 @@
-#该文件用于实现路由，请求的响应等
-import mindex
-from flask import Flask
+# 对前端的细节比较不熟悉，所以没有写处理搜索和处理搜索框
+# 如果是单纯的根据药名和属性名搜索，直接调用getMedicine这个函数
+# 如果要实现模糊搜索，应该是先使用倒排索引返回一个id列表，再根据getMedicineById这个函数进行搜索
+
+from flask import Flask, jsonify, render_template
+from db_manager import getMedicine
+from db_manager import randomName
 
 app = Flask(__name__)
+app.config['JSON_AS_ASCII'] = False
 
-index = mindex.indexDeserialize() #得到药材的索引
 
-#主界面
-@app.route("/")
-def index():
-    pass
+@app.route("/medicines/<medicine_name>")
+def getMedicines(medicine_name):
+    tags = []
+    # 属性为空表示返回所有属性
+    medicine = getMedicine(medicine_name, tags)
+    if medicine['Image'] is not None:
+        img_stream = medicine['Image'].decode('ascii')
+        medicine['Image'] = img_stream
 
-#搜索结果界面
-@app.route("/search/")
-def result():
-    pass
+    return render_template('index.html', medicine=medicine)
 
-#详情界面
-@app.route("/details/<medicine_name>")
-def details(medicine_name):
-    pass
 
-#请求图片
-@app.route("/pictures/<medicine_name>")
-def getImage(medicine_name):
-    pass
-
-#随机返回
 @app.route("/radom/")
 def radomMessage():
-    pass
+    # medicine是一个字典，里面有除了image之外的药材所有属性
+    medicine = randomName()
+    if medicine['Image'] is not None:
+        img_stream = medicine['Image'].decode('ascii')
+        medicine['Image'] = img_stream
 
-#处理搜索
-@app.route("/search/")
-def search():
-    pass
+    return jsonify(medicine)
 
-#处理返回单味药材的信息
-@app.route("/medicines/<medicine_name")
-def getMedicines():
-    pass
 
 #处理输入框
 @app.route("/preProcess")
 def preProcess():
     pass
 
+
+#处理搜索
+@app.route("/search/")
+def search():
+    pass
+
+
+@app.route("/")
+def index():
+    medicine = randomName()
+    # print(len(dict))
+    # print(dict['Image'])
+
+    img_stream = medicine['Image'].decode('ascii')
+    medicine['Image'] = img_stream
+
+    # 以下是flask使用的jinja2模板的写法，
+    return render_template('index.html', medicine=medicine)
+
+
+if __name__ == "__main__":
+    app.run()
